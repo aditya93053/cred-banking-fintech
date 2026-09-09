@@ -18,6 +18,4 @@ def cached_put(q, value): CACHE[hashlib.sha256(normalized_query(q).encode()).hex
 
 def review(draft, context):
     grounded = any(s in draft.answer for s in context) if context else not draft.sources
-    if draft.refused or grounded:
-        return VerdictModel(decision="APPROVE", reason="Grounded or safely refused.", revised_answer=draft.answer)
-    return VerdictModel(decision="REVISE", reason="Draft lacks grounded support.", revised_answer="I cannot provide that answer because it is not supported by the local knowledge base.")
+    if dra supported by the local knowledge base.")
