@@ -1,3 +1,89 @@
-from pathlib import Path
-KB = {'loan_eligibility': 'Loan eligibility varies by product. Personal loans generally depend on income, credit history, age and repayment capacity. Home, auto, education and business loans can require product-specific documents and collateral or co-applicant information.', 'emi_rules': 'EMI is determined by principal, interest rate and tenure. A longer tenure usually reduces the monthly EMI but increases total interest paid. Customers should compare total repayment rather than EMI alone.', 'credit_card_fees': 'Credit-card fee structures can include annual fees, late-payment charges, cash-advance charges and applicable taxes. Exact fees depend on the card variant and current issuer schedule. Customers should consult the applicable fee schedule before making a decision.', 'kyc_documents': 'KYC commonly requires identity and address evidence accepted by the institution. Examples can include officially valid identity documents and address proof. Additional documents may be requested based on the product or regulatory requirements.', 'fraud_dispute': "For a suspected fraudulent transaction, promptly report it through the institution's official dispute channel. Preserve transaction details and follow the verification steps provided by the support team. Do not share OTPs, passwords or PINs.", 'account_closure': "Account closure normally requires clearing outstanding dues and submitting the institution's closure request through an approved channel. Any linked services should be checked before closure. Confirmation should be retained after the account is closed.", 'interest_slabs': 'Interest rates may vary by product, customer profile and applicable slab. The final rate can depend on credit history, loan type, tenure and institutional policy. The customer should verify the applicable rate at the time of application.', 'prepayment_penalty': 'Prepayment terms depend on the product and applicable policy. Some loans may have a prepayment charge while others may have restrictions or exemptions. Customers should check the sanction terms before prepaying.', 'minimum_balance': 'Some deposit accounts may require a minimum balance while others may have no such requirement. If a minimum balance applies, charges can depend on the account variant and applicable schedule. Customers should verify the current account terms.', 'credit_score': 'Credit scores can be affected by repayment history, credit utilization, length of credit history and recent credit applications. Timely payments and responsible credit use generally support a healthy credit profile.', 'joint_account': 'Joint-account operation depends on the mandate selected for the account. The institution may define who can transact and how instructions are authorized. Account holders should confirm the operating mandate before relying on it.', 'nri_eligibility': 'NRI eligibility depends on the product and applicable regulatory and institutional rules. Certain account and loan products may be available subject to documentation and residency status. Customers should verify current eligibility for the specific product.'}
-REQUIRED_TOPICS = list(KB)
+KB = {
+    "loan_eligibility_by_type": (
+        "Personal Loan eligibility depends on age, income, credit history, "
+        "and repayment capacity. Home, Auto, Education, and Business Loans "
+        "can have additional type-specific eligibility requirements."
+    ),
+
+    "emi_rules": (
+        "EMI depends on the principal amount, applicable interest rate, "
+        "and loan tenure. A longer tenure can reduce the monthly EMI but "
+        "may increase the total interest paid."
+    ),
+
+    "credit_card_fee_structure": (
+        "Credit card fees can include annual fees, late-payment fees, "
+        "cash-advance fees, and applicable transaction charges. "
+        "The applicable fee depends on the card product and its terms."
+    ),
+
+    "kyc_documents": (
+        "KYC generally requires identity and address verification documents. "
+        "Accepted documents may include PAN, Aadhaar, passport, voter ID, "
+        "or other officially accepted proof depending on the process."
+    ),
+
+    "fraud_dispute_process": (
+        "For a suspected fraudulent transaction, the customer should report "
+        "the transaction through the official banking support channel. "
+        "The bank may verify the transaction and investigate the dispute."
+    ),
+
+    "account_closure": (
+        "An account closure request should be submitted through the bank's "
+        "approved process after clearing outstanding dues. "
+        "The bank may require identity verification before closure."
+    ),
+
+    "interest_rate_slabs": (
+        "Interest rates can vary according to loan type, borrower profile, "
+        "credit history, amount, and applicable rate slab. "
+        "The final applicable rate is determined according to the product terms."
+    ),
+
+    "prepayment_penalty": (
+        "Prepayment charges may apply when a borrower repays a loan before "
+        "the scheduled maturity date. The applicable charge depends on "
+        "the loan product and its current terms."
+    ),
+
+    "minimum_balance": (
+        "Some savings accounts may require a specified minimum balance. "
+        "The required balance and applicable charges depend on the account "
+        "type and the bank's terms."
+    ),
+
+    "credit_score_factors": (
+        "Credit score can be affected by repayment history, credit utilization, "
+        "credit history length, and the mix of credit accounts. "
+        "Frequent credit applications can also affect credit profile."
+    ),
+
+    "joint_account_rules": (
+        "Joint accounts can have multiple account holders with operating "
+        "instructions defined during account opening. "
+        "Transactions and closure requirements depend on the selected mandate."
+    ),
+
+    "nri_eligibility": (
+        "NRI customers may be eligible for selected banking and loan products "
+        "subject to applicable rules and documentation. "
+        "Eligibility can depend on residency status, income, and product terms."
+    ),
+}
+
+
+def get_document(topic):
+    return KB.get(topic)
+
+
+def all_documents():
+    return KB.copy()
+
+
+if __name__ == "__main__":
+    print(f"Total KB documents: {len(KB)}")
+
+    for topic, text in KB.items():
+        print(f"\n{topic}")
+        print(text)
