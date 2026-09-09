@@ -24,10 +24,11 @@ RELEVANT_TOPICS = [
 def document_level_precision_recall(
     queries: List[str],
     relevant_topics: List[List[str]],
+    strategy: str,
     k: int = 3,
 ) -> Dict:
 
-    rag = LocalRAG()
+    rag = LocalRAG(strategy=strategy)
 
     total_retrieved = 0
     total_relevant_retrieved = 0
@@ -50,9 +51,7 @@ def document_level_precision_recall(
         ]
 
         relevant_set = set(relevant)
-        retrieved_set = set(
-            retrieved_topics
-        )
+        retrieved_set = set(retrieved_topics)
 
         true_positive = len(
             relevant_set & retrieved_set
@@ -73,7 +72,7 @@ def document_level_precision_recall(
         rows.append(
             {
                 "query": query,
-                "relevant_documents": list(
+                "relevant_documents": sorted(
                     relevant_set
                 ),
                 "retrieved_documents": retrieved_topics,
@@ -98,14 +97,9 @@ def document_level_precision_recall(
     )
 
     return {
-        "precision": round(
-            precision,
-            4,
-        ),
-        "recall": round(
-            recall,
-            4,
-        ),
+        "strategy": strategy,
+        "precision": round(precision, 4),
+        "recall": round(recall, 4),
         "total_retrieved": total_retrieved,
         "total_relevant_retrieved": (
             total_relevant_retrieved
@@ -116,7 +110,11 @@ def document_level_precision_recall(
 
 
 def print_evaluation(result: Dict):
-    print("\nRAG DOCUMENT-LEVEL EVALUATION")
+    print(
+        f"\nRAG DOCUMENT-LEVEL EVALUATION "
+        f"({result['strategy']})"
+    )
+
     print("=" * 60)
 
     for index, row in enumerate(
@@ -141,80 +139,4 @@ def print_evaluation(result: Dict):
             f"{row['true_positive']}"
         )
 
-    print("\n" + "-" * 60)
-
-    print(
-        "Precision arithmetic:"
-    )
-
-    print(
-        f"TP / Retrieved = "
-        f"{result['total_relevant_retrieved']} / "
-        f"{result['total_retrieved']} = "
-        f"{result['precision']}"
-    )
-
-    print(
-        "\nRecall arithmetic:"
-    )
-
-    print(
-        f"TP / Relevant = "
-        f"{result['total_relevant_retrieved']} / "
-        f"{result['total_relevant']} = "
-        f"{result['recall']}"
-    )
-
-    print(
-        "\nRecommendation:"
-    )
-
-    if (
-        result["precision"] >= 0.80
-        and result["recall"] >= 0.80
-    ):
-        print(
-            "Retrieval quality is acceptable "
-            "for the evaluated support queries."
-        )
-    else:
-        print(
-            "Retrieval quality should be improved "
-            "before production use."
-        )
-
-
-def run_rag_evaluation():
-    result = document_level_precision_recall(
-        queries=EVALUATION_QUERIES,
-        relevant_topics=RELEVANT_TOPICS,
-        k=3,
-    )
-
-    print_evaluation(result)
-
-    return result
-
-
-def evaluation_summary():
-    result = run_rag_evaluation()
-
-    return {
-        "query_count": len(
-            result["rows"]
-        ),
-        "precision": result["precision"],
-        "recall": result["recall"],
-        "recommendation": (
-            "PASS"
-            if (
-                result["precision"] >= 0.80
-                and result["recall"] >= 0.80
-            )
-            else "IMPROVE"
-        ),
-    }
-
-
-if __name__ == "__main__":
-    evaluation_summary()
+    print("\n" + "-"
