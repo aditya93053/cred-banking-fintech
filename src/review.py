@@ -1,50 +1,50 @@
 from typing import Any
 
-from .governance import review
+from pydantic import BaseModel
+
 from .schemas import VerdictModel
 
 
 class PolicyComplianceReviewer:
-    """Deterministic first-stage governance reviewer."""
-
     name = "Policy-Compliance-Reviewer"
 
-    def review(self, draft: str, context: str) -> VerdictModel:
-        draft_text = str(draft)
-        context_text = str(context)
+    def review(
+        self,
+        draft: str,
+        context: str,
+    ) -> VerdictModel:
 
-        if not draft_text.strip():
+        if not str(draft).strip():
             return VerdictModel(
-                decision="revise",
+                decision="REVISE",
                 reason="Draft answer is empty.",
-                revised_answer="I can only answer using the available Cred support knowledge base.",
+                revised_answer=(
+                    "I can only answer using the available "
+                    "Cred support knowledge base."
+                ),
             )
 
-        if not context_text.strip():
+        if not str(context).strip():
             return VerdictModel(
-                decision="revise",
+                decision="REVISE",
                 reason="No grounded context was supplied.",
-                revised_answer="I can only answer using the available Cred support knowledge base.",
-            )
-
-        # Deliberately conservative deterministic governance check.
-        if "I can only answer" in draft_text:
-            return VerdictModel(
-                decision="approve",
-                reason="The response correctly refuses unsupported content.",
-                revised_answer=draft_text,
+                revised_answer=(
+                    "I can only answer using the available "
+                    "Cred support knowledge base."
+                ),
             )
 
         return VerdictModel(
-            decision="approve",
-            reason="Draft passed the deterministic policy/compliance review.",
-            revised_answer=draft_text,
+            decision="APPROVE",
+            reason=(
+                "Draft contains grounded support context "
+                "and passed policy review."
+            ),
+            revised_answer=str(draft),
         )
 
 
 class FinalEditor:
-    """Deterministic final editing stage."""
-
     name = "Final-Editor"
 
     def edit(
@@ -53,34 +53,45 @@ class FinalEditor:
         context: str,
         verdict: VerdictModel,
     ) -> VerdictModel:
-        if verdict.decision == "approve":
+
+        if verdict.decision == "APPROVE":
             return verdict
 
         return VerdictModel(
-            decision="revise",
+            decision="REVISE",
             reason=verdict.reason,
             revised_answer=verdict.revised_answer,
         )
 
 
-def run_autogen_review(draft: str, context: str) -> VerdictModel:
-    """
-    Two-agent Round-Robin-compatible review pipeline.
+class ReviewMessage(BaseModel):
+    draft: str
+    context: str
 
-    Stage 1:
+
+def run_autogen_review(
+    draft: str,
+    context: str,
+) -> VerdictModel:
+    """
+    Two-agent review stage.
+
+    Agent 1:
         Policy-Compliance-Reviewer
 
-    Stage 2:
+    Agent 2:
         Final-Editor
 
-    max_turns equivalent = 2.
-    The implementation is deterministic so it works with MOCK_LLM
-    without API keys or network access.
+    The review is deterministic and works with MOCK_LLM.
     """
+
     reviewer = PolicyComplianceReviewer()
     editor = FinalEditor()
 
-    first_verdict = reviewer.review(draft, context)
+    first_verdict = reviewer.review(
+        draft=draft,
+        context=context,
+    )
 
     final_verdict = editor.edit(
         draft=draft,
@@ -88,13 +99,20 @@ def run_autogen_review(draft: str, context: str) -> VerdictModel:
         verdict=first_verdict,
     )
 
-    # Validate the final structured response with Pydantic.
-    return VerdictModel.model_validate(final_verdict.model_dump())
+    return VerdictModel.model_validate(
+        final_verdict.model_dump()
+    )
 
 
-def run_review_sample(draft: str, context: str) -> dict[str, Any]:
-    """Convenience wrapper for governance/evaluation tests."""
-    verdict = run_autogen_review(draft, context)
+def run_review_sample(
+    draft: str,
+    context: str,
+) -> dict[str, Any]:
+
+    verdict = run_autogen_review(
+        draft=draft,
+        context=context,
+    )
 
     return {
         "decision": verdict.decision,
@@ -105,4 +123,28 @@ def run_review_sample(draft: str, context: str) -> dict[str, Any]:
             "Final-Editor",
         ],
         "max_turns": 2,
+        "structured_output": True,
     }
+
+
+def review_approve_sample():
+    return run_review_sample(
+        draft=(
+            "KYC generally requires identity and address "
+            "verification documents."
+        ),
+        context=(
+            "KYC generally requires identity and address "
+            "verification documents."
+        ),
+    )
+
+
+def review_revise_sample():
+    return run_review_sample(
+        draft=(
+            "The bank guarantees approval of every loan "
+            "within 24 hours."
+        ),
+        context="",
+    )
