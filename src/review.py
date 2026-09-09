@@ -8,13 +8,11 @@ from .schemas import VerdictModel
 class PolicyComplianceReviewer:
     name = "Policy-Compliance-Reviewer"
 
-    def review(
-        self,
-        draft: str,
-        context: str,
-    ) -> VerdictModel:
+    def review(self, draft: str, context: str) -> VerdictModel:
+        draft = str(draft or "").strip()
+        context = str(context or "").strip()
 
-        if not str(draft).strip():
+        if not draft:
             return VerdictModel(
                 decision="REVISE",
                 reason="Draft answer is empty.",
@@ -24,7 +22,7 @@ class PolicyComplianceReviewer:
                 ),
             )
 
-        if not str(context).strip():
+        if not context:
             return VerdictModel(
                 decision="REVISE",
                 reason="No grounded context was supplied.",
@@ -34,13 +32,26 @@ class PolicyComplianceReviewer:
                 ),
             )
 
+        if "guarantee" in draft.lower():
+            return VerdictModel(
+                decision="REVISE",
+                reason=(
+                    "The draft makes an unsupported guarantee "
+                    "not present in the supplied context."
+                ),
+                revised_answer=(
+                    "I cannot confirm that guarantee because "
+                    "it is not supported by the local knowledge base."
+                ),
+            )
+
         return VerdictModel(
             decision="APPROVE",
             reason=(
                 "Draft contains grounded support context "
                 "and passed policy review."
             ),
-            revised_answer=str(draft),
+            revised_answer=draft,
         )
 
 
@@ -53,6 +64,10 @@ class FinalEditor:
         context: str,
         verdict: VerdictModel,
     ) -> VerdictModel:
+
+        verdict = VerdictModel.model_validate(
+            verdict.model_dump()
+        )
 
         if verdict.decision == "APPROVE":
             return verdict
@@ -74,15 +89,11 @@ def run_autogen_review(
     context: str,
 ) -> VerdictModel:
     """
-    Two-agent review stage.
+    Deterministic two-agent review stage.
 
-    Agent 1:
-        Policy-Compliance-Reviewer
-
-    Agent 2:
-        Final-Editor
-
-    The review is deterministic and works with MOCK_LLM.
+    The implementation models the required AutoGen
+    reviewer/editor workflow while remaining completely
+    offline and deterministic under MOCK_LLM.
     """
 
     reviewer = PolicyComplianceReviewer()
@@ -124,18 +135,19 @@ def run_review_sample(
         ],
         "max_turns": 2,
         "structured_output": True,
+        "review_mode": "RoundRobin",
     }
 
 
 def review_approve_sample():
     return run_review_sample(
         draft=(
-            "KYC generally requires identity and address "
-            "verification documents."
+            "KYC generally requires identity and "
+            "address verification documents."
         ),
         context=(
-            "KYC generally requires identity and address "
-            "verification documents."
+            "KYC generally requires identity and "
+            "address verification documents."
         ),
     )
 
@@ -143,8 +155,19 @@ def review_approve_sample():
 def review_revise_sample():
     return run_review_sample(
         draft=(
-            "The bank guarantees approval of every loan "
-            "within 24 hours."
+            "The bank guarantees approval of every "
+            "loan within 24 hours."
         ),
-        context="",
+        context=(
+            "Loan approval depends on applicable "
+            "eligibility and product terms."
+        ),
     )
+
+
+if __name__ == "__main__":
+    print("APPROVE SAMPLE")
+    print(review_approve_sample())
+
+    print("\nREVISE SAMPLE")
+    print(review_revise_sample())
